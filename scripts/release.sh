@@ -11,7 +11,15 @@ cd "$ROOT"
 # 1. Bump version via npm (creates git commit + tag)
 npm version "$BUMP" --no-git-tag-version
 VERSION=$(node -p "require('./package.json').version")
-git add package.json
+
+# 2. Sync manifest.json version
+node -e "
+  const f='manifest.json', p=require('./'+f);
+  p.version='${VERSION}';
+  require('fs').writeFileSync(f, JSON.stringify(p,null,2)+'\n');
+"
+
+git add package.json manifest.json
 git commit -m "v${VERSION}"
 git tag "v${VERSION}"
 
