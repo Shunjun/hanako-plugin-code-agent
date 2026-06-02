@@ -29,7 +29,7 @@ Restart Hanako after installation.
 ## Prerequisites
 
 - CLI tool installed and available in PATH (`claude` or `codex`)
-- Hanako v0.82.0+
+- Hanako v0.268.6+
 
 ## Configuration
 

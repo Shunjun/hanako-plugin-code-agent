@@ -29,7 +29,7 @@ HanaAgent 插件：将编码任务委托给本地 CLI 工具（Claude Code、Cod
 ## 前置要求
 
 - 已安装对应 CLI 工具（`claude` 或 `codex`），且在 PATH 中可用
-- Hanako v0.82.0+
+- Hanako v0.268.6+
 
 ## 配置
 
