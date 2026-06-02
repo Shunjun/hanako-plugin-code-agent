@@ -1,5 +1,5 @@
 {
-  "name": "hanako-code-agent",
+  "name": "hanako-plugin-code-agent",
   "version": "0.1.0",
   "description": "HanaAgent 插件：调用本地 CLI 编码工具（Claude Code、Codex）执行编码任务",
   "type": "module",
@@ -11,6 +11,6 @@
     "codex",
     "coding-agent"
   ],
-  "author": "toby",
-  "license": "MIT"
+  "author": "toby.zsj@gmail.com",
+  "license": "Apache-2.0"
 }

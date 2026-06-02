@@ -5,7 +5,15 @@
  */
 
 export const name = "code_abort";
-export const description = "终止一个正在运行的 CLI 编码任务。";
+export const description = `终止一个正在运行的 CLI 编码任务，杀死子进程并清理资源。
+
+【参数】
+- taskId（必填）：任务 ID，由 code_start 返回
+
+【说明】
+- 仅对 pending 或 running 状态的任务有效
+- 已完成（done/failed）的任务无法终止
+- 终止后任务状态变为 aborted`;
 
 export const parameters = {
   type: "object",
