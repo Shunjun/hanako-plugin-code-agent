@@ -78,6 +78,12 @@ export async function execute(input, ctx) {
     };
   }
 
+  if (!input.prompt || !input.prompt.trim()) {
+    return {
+      content: [{ type: "text", text: "prompt is required. Please provide a task description." }],
+    };
+  }
+
   const cfg = ctx.config?.getAll?.() || {};
   const toolId = input.tool || cfg.defaultTool || "claude";
   const adapter = registry.get(toolId);
