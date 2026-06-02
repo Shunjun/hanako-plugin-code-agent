@@ -15,6 +15,7 @@
         },
         "defaultModel": {
           "type": "string",
+          "default": "sonnet",
           "description": "默认模型（如 sonnet、opus）"
         },
         "maxConcurrent": {

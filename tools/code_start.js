@@ -178,7 +178,7 @@ export async function execute(input, ctx) {
     content: [
       {
         type: "text",
-        text: `Started ${adapter.name} task ,taskId:(${taskId}). Use code_status to check progress.`,
+        text: `Started ${adapter.name} task (${taskId}). No need to wait — results will be pushed automatically when done. Use code_status to check progress manually.`,
       },
     ],
     details: {
@@ -187,6 +187,7 @@ export async function execute(input, ctx) {
         route: `/card/task?taskId=${encodeURIComponent(taskId)}`,
         title: taskTitle,
         description: `正在使用 ${adapter.name} 执行编码任务...`,
+        aspectRatio: "8:1",
       },
     },
   };

@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      (function () {
+        var p = new URLSearchParams(window.location.search);
+        var css = p.get("hana-css");
+        if (css) {
+          var link = document.createElement("link");
+          link.rel = "stylesheet";
+          link.href = css;
+          document.head.appendChild(link);
+        }
+      })();
+    </script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(
+          --font-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "PingFang SC",
+          sans-serif
+        );
+        font-size: 0.78rem;
+        line-height: 1.6;
+        color: var(--text, #3b3d3f);
+        background: var(--bg-card, #fcfaf5);
+        overflow: hidden;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Bar (header, fixed) */
+      .bar {
+        flex-shrink: 0;
+        padding: 8px 10px;
+        cursor: pointer;
+        user-select: none;
+        background: var(--bg, #f8f5ed);
+        border-bottom: 1px solid var(--border, rgba(83, 125, 150, 0.15));
+        transition: background var(--duration-fast, 0.15s)
+          var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+      }
+      .bar:hover {
+        background: var(--overlay-subtle, rgba(0, 0, 0, 0.05));
+      }
+
+      .bar-line1 {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 2px;
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        transition: background var(--duration-fast, 0.15s)
+          var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+      }
+      .status-dot.pending  { background: var(--text-muted, #8e9196); }
+      .status-dot.running  { background: var(--green, #7bae7f); animation: pulse 1.6s ease-in-out infinite; }
+      .status-dot.done     { background: var(--accent, #537d96); }
+      .status-dot.failed   { background: var(--danger, #8b3a3a); }
+      .status-dot.aborted  { background: var(--coral, #ec8f8d); }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.35; }
+      }
+
+      .bar-msg {
+        font-size: 0.72rem;
+        color: var(--text, #3b3d3f);
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .bar-chevron {
+        flex-shrink: 0;
+        font-size: 0.55rem;
+        color: var(--text-muted, #8e9196);
+        transition: transform var(--duration-fast, 0.15s)
+          var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+      }
+      .bar-chevron[data-open="true"] {
+        transform: rotate(90deg);
+      }
+
+      .bar-line2 {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.65rem;
+        color: var(--text-muted, #8e9196);
+      }
+
+      .bar-cwd {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .bar-status {
+        flex-shrink: 0;
+        margin-left: 8px;
+        font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+        font-size: 0.62rem;
+        color: var(--text-muted, #8e9196);
+      }
+
+      /* Panel (scrollable body) */
+      .panel {
+        display: none;
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 10px 8px;
+      }
+      .panel.open {
+        display: block;
+      }
+
+      .steps {
+        border: 1px solid var(--border, rgba(83, 125, 150, 0.22));
+        border-radius: var(--radius-sm, 6px);
+        background: var(--bg, #f8f5ed);
+      }
+
+      .step {
+        padding: 4px 8px;
+        border-bottom: 1px solid var(--border, rgba(83, 125, 150, 0.12));
+        display: flex;
+        gap: 6px;
+        align-items: flex-start;
+        font-size: 0.72rem;
+        transition: background var(--duration-fast, 0.15s)
+          var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+      }
+      .step:last-child { border-bottom: none; }
+      .step:hover { background: var(--overlay-subtle, rgba(0, 0, 0, 0.03)); }
+
+      .step-icon { flex-shrink: 0; width: 14px; text-align: center; font-size: 0.68rem; }
+      .step-text { flex: 1; word-break: break-all; color: var(--text, #3b3d3f); }
+      .step-time { font-size: 0.65rem; color: var(--text-muted, #8e9196); flex-shrink: 0; }
+
+      .result {
+        margin-top: 6px;
+        padding: 6px 8px;
+        border-radius: var(--radius-sm, 6px);
+        background: var(--bg, #f8f5ed);
+        border: 1px solid var(--border, rgba(83, 125, 150, 0.22));
+        white-space: pre-wrap;
+        word-break: break-all;
+        font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+        font-size: 0.68rem;
+        line-height: 1.5;
+        color: var(--text, #3b3d3f);
+      }
+      .result.error { color: var(--danger, #8b3a3a); border-color: var(--danger, #8b3a3a); }
+
+      .summary {
+        margin-top: 4px;
+        font-size: 0.72rem;
+        color: var(--text-muted, #8e9196);
+      }
+
+      .panel::-webkit-scrollbar { width: 4px; }
+      .panel::-webkit-scrollbar-thumb {
+        background: var(--border, rgba(83, 125, 150, 0.22));
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bar" id="bar">
+      <div class="bar-line1">
+        <div class="status-dot pending" id="dot"></div>
+        <div class="bar-msg" id="barMsg">Initializing...</div>
+        <div class="bar-chevron" id="chevron" data-open="false">&#9656;</div>
+      </div>
+      <div class="bar-line2">
+        <span class="bar-cwd" id="barCwd"></span>
+        <span class="bar-status" id="barStatus">init</span>
+      </div>
+    </div>
+    <div class="panel" id="panel">
+      <div class="steps" id="steps"></div>
+      <div class="result" id="result" style="display: none"></div>
+      <div class="summary" id="summary"></div>
+    </div>
+
+    <script>
+      (function () {
+        var taskId = new URLSearchParams(window.location.search).get("taskId") || "";
+        var dot = document.getElementById("dot");
+        var barMsg = document.getElementById("barMsg");
+        var barCwd = document.getElementById("barCwd");
+        var barStatus = document.getElementById("barStatus");
+        var chevron = document.getElementById("chevron");
+        var panel = document.getElementById("panel");
+        var stepsEl = document.getElementById("steps");
+        var resultEl = document.getElementById("result");
+        var summaryEl = document.getElementById("summary");
+        var lastStepCount = 0;
+        var expanded = false;
+        var msgIndex = -1;
+
+        // Friendly messages per tool, selected by taskId hash
+        var messages = {
+          claude: [
+            "Claude is coding hard",
+            "Claude is thinking deeply",
+            "Claude is crafting code",
+            "Claude is on it",
+            "Claude is hustling",
+            "Claude is in the zone",
+          ],
+          codex: [
+            "Codex is coding hard",
+            "Codex is thinking deeply",
+            "Codex is crafting code",
+            "Codex is on it",
+            "Codex is hustling",
+            "Codex is in the zone",
+          ],
+        };
+
+        function hashTaskId(id) {
+          var h = 0;
+          for (var i = 0; i < id.length; i++) {
+            h = ((h << 5) - h + id.charCodeAt(i)) | 0;
+          }
+          return Math.abs(h);
+        }
+
+        function getMsgIndex(tool) {
+          if (msgIndex >= 0) return msgIndex;
+          var pool = messages[tool] || messages.claude;
+          msgIndex = hashTaskId(taskId) % pool.length;
+          return msgIndex;
+        }
+
+        var statusLabels = {
+          pending: "waiting",
+          running: "running",
+          done: "done",
+          failed: "failed",
+          aborted: "aborted",
+        };
+
+        var stepStatusMap = {
+          session_init: "init",
+          thinking: "thinking",
+          tool_call: "calling",
+          tool_result: "done",
+          file_change: "editing",
+          text: "writing",
+          result: "done",
+          error: "error",
+        };
+
+        var COLLAPSED_H = 50;
+        var EXPANDED_H = 300;
+
+        function requestResize(height) {
+          window.parent.postMessage(
+            { type: "resize-request", payload: { width: 400, height: height } },
+            "*"
+          );
+        }
+
+        document.getElementById("bar").addEventListener("click", function () {
+          expanded = !expanded;
+          panel.className = "panel" + (expanded ? " open" : "");
+          chevron.setAttribute("data-open", expanded);
+          requestResize(expanded ? EXPANDED_H : COLLAPSED_H);
+        });
+
+        function iconForType(type) {
+          var icons = {
+            thinking: "\u{1F9E0}", tool_call: "\u{1F507}", tool_result: "\u{2705}",
+            file_change: "\u{1F4DD}", text: "\u{1F4AC}", session_init: "\u{1F680}",
+            error: "\u{274C}", result: "\u{1F3C1}"
+          };
+          return icons[type] || "\u{2022}";
+        }
+
+        function stepText(s) {
+          var data = s.data || {};
+          if (s.type === "tool_call") return data.summary || data.tool || "";
+          if (s.type === "file_change")
+            return (data.action === "write" ? "Created: " : "Modified: ") + (data.path || "");
+          if (s.type === "thinking") return "Thinking...";
+          if (s.type === "text") return (data.text || "").slice(0, 120);
+          if (s.type === "result") return "Done";
+          if (s.type === "error") return data.message || "Error";
+          return s.type || "";
+        }
+
+        function timeAgo(iso) {
+          if (!iso) return "";
+          var ms = Date.now() - new Date(iso).getTime();
+          if (ms < 60000) return Math.round(ms / 1000) + "s";
+          return Math.round(ms / 60000) + "m";
+        }
+
+        function escapeHtml(s) {
+          return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function renderSteps(steps) {
+          if (!steps || steps.length === lastStepCount) return;
+          lastStepCount = steps.length;
+          var recent = steps.slice(-20);
+          stepsEl.innerHTML = recent
+            .map(function (s) {
+              return (
+                '<div class="step">' +
+                '<span class="step-icon">' + iconForType(s.type) + "</span>" +
+                '<span class="step-text">' + escapeHtml(stepText(s)) + "</span>" +
+                '<span class="step-time">' + timeAgo(s.ts) + "</span>" +
+                "</div>"
+              );
+            })
+            .join("");
+          panel.scrollTop = panel.scrollHeight;
+        }
+
+        function update(task) {
+          if (!task) return;
+          dot.className = "status-dot " + (task.status || "pending");
+
+          // Bar line 1: friendly message
+          var pool = messages[task.tool] || messages.claude;
+          var mi = getMsgIndex(task.tool);
+          if (task.status === "done") {
+            barMsg.textContent = pool[mi].replace("coding", "done coding").replace("thinking", "done thinking").replace("crafting", "done crafting");
+          } else if (task.status === "failed" || task.status === "aborted") {
+            barMsg.textContent = task.tool + " stopped";
+          } else {
+            barMsg.textContent = pool[mi];
+          }
+
+          // Bar line 2: cwd + step status
+          barCwd.textContent = task.cwd || "";
+          var steps = task.steps || [];
+          if (task.status === "done") {
+            barStatus.textContent = "done";
+          } else if (task.status === "failed") {
+            barStatus.textContent = "failed";
+          } else if (task.status === "aborted") {
+            barStatus.textContent = "aborted";
+          } else if (steps.length > 0) {
+            var lastStep = steps[steps.length - 1];
+            barStatus.textContent = stepStatusMap[lastStep.type] || lastStep.type;
+          } else {
+            barStatus.textContent = statusLabels[task.status] || task.status;
+          }
+
+          renderSteps(steps);
+
+          if (task.status === "done" && task.result) {
+            resultEl.style.display = "block";
+            resultEl.textContent = task.result.text || JSON.stringify(task.result, null, 2);
+            summaryEl.textContent =
+              task.result.fileChanges && task.result.fileChanges.length
+                ? task.result.fileChanges.length + " file(s), " + (task.result.toolCallCount || 0) + " calls"
+                : (task.result.toolCallCount || 0) + " tool calls";
+          } else if (task.status === "failed" && task.error) {
+            resultEl.style.display = "block";
+            resultEl.className = "result error";
+            resultEl.textContent = task.error.message || "Failed";
+          }
+
+          requestResize(expanded ? EXPANDED_H : COLLAPSED_H);
+
+          if (task.status === "running" || task.status === "pending") {
+            setTimeout(poll, 1000);
+          }
+        }
+
+        var urlParams = new URLSearchParams(window.location.search);
+        var authToken = urlParams.get("token") || "";
+
+        function poll() {
+          var url =
+            "/api/plugins/code-agent/tasks/" +
+            encodeURIComponent(taskId) +
+            (authToken ? "?token=" + encodeURIComponent(authToken) : "");
+          fetch(url)
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+              if (d && d.task) update(d.task);
+              else setTimeout(poll, 2000);
+            })
+            .catch(function () { setTimeout(poll, 2000); });
+        }
+
+        window.parent.postMessage({ type: "ready" }, "*");
+        poll();
+      })();
+    </script>
+  </body>
+</html>
