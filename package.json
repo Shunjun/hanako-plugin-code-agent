@@ -1,0 +1,16 @@
+{
+  "name": "hanako-code-agent",
+  "version": "0.1.0",
+  "description": "HanaAgent 插件：调用本地 CLI 编码工具（Claude Code、Codex）执行编码任务",
+  "type": "module",
+  "main": "index.js",
+  "keywords": [
+    "hanaagent",
+    "plugin",
+    "claude-code",
+    "codex",
+    "coding-agent"
+  ],
+  "author": "toby",
+  "license": "MIT"
+}
