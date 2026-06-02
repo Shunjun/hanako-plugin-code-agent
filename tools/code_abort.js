@@ -5,20 +5,20 @@
  */
 
 export const name = "code_abort";
-export const description = `终止一个正在运行的 CLI 编码任务，杀死子进程并清理资源。
+export const description = `Abort a running CLI coding task. Kills the child process and cleans up resources.
 
-【参数】
-- taskId（必填）：任务 ID，由 code_start 返回
+【Parameters】
+- taskId (required): Task ID returned by code_start
 
-【说明】
-- 仅对 pending 或 running 状态的任务有效
-- 已完成（done/failed）的任务无法终止
-- 终止后任务状态变为 aborted`;
+【Notes】
+- Only effective for tasks in pending or running status
+- Tasks that are already done or failed cannot be aborted
+- Aborted tasks will have their status set to "aborted"`;
 
 export const parameters = {
   type: "object",
   properties: {
-    taskId: { type: "string", description: "任务 ID（code_start 返回的 taskId）" },
+    taskId: { type: "string", description: "Task ID returned by code_start" },
   },
   required: ["taskId"],
 };
@@ -27,16 +27,27 @@ export async function execute(input, ctx) {
   const store = ctx._codeAgent?.store;
   const processes = ctx._codeAgent?.processes;
   if (!store || !processes) {
-    return { content: [{ type: "text", text: "code-agent plugin not initialized" }] };
+    return {
+      content: [{ type: "text", text: "code-agent plugin not initialized" }],
+    };
   }
 
   const task = store.get(input.taskId);
   if (!task) {
-    return { content: [{ type: "text", text: `Task ${input.taskId} not found.` }] };
+    return {
+      content: [{ type: "text", text: `Task ${input.taskId} not found.` }],
+    };
   }
 
   if (task.status !== "pending" && task.status !== "running") {
-    return { content: [{ type: "text", text: `Task ${input.taskId} is already ${task.status}.` }] };
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Task ${input.taskId} is already ${task.status}.`,
+        },
+      ],
+    };
   }
 
   const proc = processes.get(input.taskId);

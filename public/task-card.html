@@ -43,11 +43,15 @@
       /* Bar (header, fixed) */
       .bar {
         flex-shrink: 0;
-        padding: 8px 10px;
+        height: 56px;
+        padding: 0 10px;
         cursor: pointer;
         user-select: none;
         background: var(--bg, #f8f5ed);
         border-bottom: 1px solid var(--border, rgba(83, 125, 150, 0.15));
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         transition: background var(--duration-fast, 0.15s)
           var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
       }
@@ -58,31 +62,29 @@
       .bar-line1 {
         display: flex;
         align-items: center;
-        gap: 6px;
-        margin-bottom: 2px;
+        gap: 8px;
+        min-height: 0;
       }
 
-      .status-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
+      .bar-tool-icon {
         flex-shrink: 0;
-        transition: background var(--duration-fast, 0.15s)
-          var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.72rem;
+        background: var(--accent, #537d96);
+        color: #fff;
       }
-      .status-dot.pending  { background: var(--text-muted, #8e9196); }
-      .status-dot.running  { background: var(--green, #7bae7f); animation: pulse 1.6s ease-in-out infinite; }
-      .status-dot.done     { background: var(--accent, #537d96); }
-      .status-dot.failed   { background: var(--danger, #8b3a3a); }
-      .status-dot.aborted  { background: var(--coral, #ec8f8d); }
-
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.35; }
+      .bar-tool-icon.codex {
+        background: var(--green, #7bae7f);
       }
 
       .bar-msg {
         font-size: 0.72rem;
+        font-weight: 500;
         color: var(--text, #3b3d3f);
         flex: 1;
         white-space: nowrap;
@@ -90,12 +92,41 @@
         text-overflow: ellipsis;
       }
 
+      .bar-status-badge {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 1px 6px;
+        border-radius: 10px;
+        font-size: 0.6rem;
+        font-weight: 500;
+        line-height: 1.4;
+      }
+      .bar-status-badge.pending  { background: rgba(142,145,150,0.15); color: var(--text-muted, #8e9196); }
+      .bar-status-badge.running  { background: rgba(123,174,127,0.15); color: var(--green, #5a9e5f); }
+      .bar-status-badge.done     { background: rgba(83,125,150,0.15);  color: var(--accent, #537d96); }
+      .bar-status-badge.failed   { background: rgba(139,58,58,0.15);  color: var(--danger, #8b3a3a); }
+      .bar-status-badge.aborted  { background: rgba(236,143,141,0.15); color: var(--coral, #c0706e); }
+
+      .bar-status-icon {
+        font-size: 0.6rem;
+      }
+
       .bar-chevron {
         flex-shrink: 0;
-        font-size: 0.55rem;
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         color: var(--text-muted, #8e9196);
         transition: transform var(--duration-fast, 0.15s)
           var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+      }
+      .bar-chevron svg {
+        width: 12px;
+        height: 12px;
       }
       .bar-chevron[data-open="true"] {
         transform: rotate(90deg);
@@ -105,8 +136,10 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 0.65rem;
+        font-size: 0.62rem;
         color: var(--text-muted, #8e9196);
+        margin-top: 3px;
+        padding-left: 28px;
       }
 
       .bar-cwd {
@@ -116,12 +149,11 @@
         text-overflow: ellipsis;
       }
 
-      .bar-status {
+      .bar-step-count {
         flex-shrink: 0;
         margin-left: 8px;
         font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
-        font-size: 0.62rem;
-        color: var(--text-muted, #8e9196);
+        font-size: 0.58rem;
       }
 
       /* Panel (scrollable body) */
@@ -189,13 +221,19 @@
   <body>
     <div class="bar" id="bar">
       <div class="bar-line1">
-        <div class="status-dot pending" id="dot"></div>
+        <div class="bar-tool-icon" id="toolIcon">C</div>
         <div class="bar-msg" id="barMsg">Initializing...</div>
-        <div class="bar-chevron" id="chevron" data-open="false">&#9656;</div>
+        <div class="bar-status-badge pending" id="statusBadge">
+          <span class="bar-status-icon" id="statusIcon">⏳</span>
+          <span id="statusText">waiting</span>
+        </div>
+        <div class="bar-chevron" id="chevron" data-open="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
       </div>
       <div class="bar-line2">
         <span class="bar-cwd" id="barCwd"></span>
-        <span class="bar-status" id="barStatus">init</span>
+        <span class="bar-step-count" id="barStepCount"></span>
       </div>
     </div>
     <div class="panel" id="panel">
@@ -207,10 +245,13 @@
     <script>
       (function () {
         var taskId = new URLSearchParams(window.location.search).get("taskId") || "";
-        var dot = document.getElementById("dot");
+        var toolIcon = document.getElementById("toolIcon");
         var barMsg = document.getElementById("barMsg");
         var barCwd = document.getElementById("barCwd");
-        var barStatus = document.getElementById("barStatus");
+        var statusBadge = document.getElementById("statusBadge");
+        var statusIcon = document.getElementById("statusIcon");
+        var statusText = document.getElementById("statusText");
+        var barStepCount = document.getElementById("barStepCount");
         var chevron = document.getElementById("chevron");
         var panel = document.getElementById("panel");
         var stepsEl = document.getElementById("steps");
@@ -255,14 +296,6 @@
           return msgIndex;
         }
 
-        var statusLabels = {
-          pending: "waiting",
-          running: "running",
-          done: "done",
-          failed: "failed",
-          aborted: "aborted",
-        };
-
         var stepStatusMap = {
           session_init: "init",
           thinking: "thinking",
@@ -274,7 +307,7 @@
           error: "error",
         };
 
-        var COLLAPSED_H = 50;
+        var COLLAPSED_H = 56;
         var EXPANDED_H = 300;
 
         function requestResize(height) {
@@ -341,9 +374,21 @@
           panel.scrollTop = panel.scrollHeight;
         }
 
+        var toolIcons = { claude: "C", codex: "X" };
+        var statusIcons = {
+          pending: "⏳", running: "⚡", done: "✓", failed: "✗", aborted: "⊘"
+        };
+        var statusLabels = {
+          pending: "waiting", running: "running", done: "done",
+          failed: "failed", aborted: "aborted"
+        };
+
         function update(task) {
           if (!task) return;
-          dot.className = "status-dot " + (task.status || "pending");
+
+          // Tool icon
+          toolIcon.textContent = toolIcons[task.tool] || "C";
+          toolIcon.className = "bar-tool-icon" + (task.tool === "codex" ? " codex" : "");
 
           // Bar line 1: friendly message
           var pool = messages[task.tool] || messages.claude;
@@ -356,21 +401,29 @@
             barMsg.textContent = pool[mi];
           }
 
-          // Bar line 2: cwd + step status
-          barCwd.textContent = task.cwd || "";
+          // Status badge
+          statusBadge.className = "bar-status-badge " + (task.status || "pending");
+          statusIcon.textContent = statusIcons[task.status] || "⏳";
+
           var steps = task.steps || [];
+          var stepCount = steps.length;
           if (task.status === "done") {
-            barStatus.textContent = "done";
+            statusText.textContent = "done";
           } else if (task.status === "failed") {
-            barStatus.textContent = "failed";
+            statusText.textContent = "failed";
           } else if (task.status === "aborted") {
-            barStatus.textContent = "aborted";
-          } else if (steps.length > 0) {
-            var lastStep = steps[steps.length - 1];
-            barStatus.textContent = stepStatusMap[lastStep.type] || lastStep.type;
+            statusText.textContent = "aborted";
+          } else if (stepCount > 0) {
+            var lastStep = steps[stepCount - 1];
+            var label = stepStatusMap[lastStep.type] || lastStep.type;
+            statusText.textContent = stepCount + " steps · " + label;
           } else {
-            barStatus.textContent = statusLabels[task.status] || task.status;
+            statusText.textContent = statusLabels[task.status] || task.status;
           }
+
+          // Bar line 2: cwd + step count
+          barCwd.textContent = task.cwd || "";
+          barStepCount.textContent = stepCount > 0 ? stepCount + " steps" : "";
 
           renderSteps(steps);
 

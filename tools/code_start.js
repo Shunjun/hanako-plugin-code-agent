@@ -7,57 +7,63 @@
 import { CliProcess } from "../lib/cli-process.js";
 
 export const name = "code_start";
-export const description = `调用本地 CLI 编码工具执行编码任务。
+export const description = `Start a local CLI coding tool to execute a coding task.
 
-【工作方式】非阻塞：提交任务后立即返回，后台运行。执行过程中工具调用、思考过程、文件修改会实时显示在聊天窗口的卡片中。任务完成后会自动发消息通知你结果，不需要轮询或等待。
+【How it works】Non-blocking: returns immediately with a taskId. Progress (tool calls, thinking, file changes) is displayed in a card in the chat. Results are pushed automatically when done — no polling needed.
 
-【支持的工具】
-- claude：Claude Code CLI（默认）
-- codex：OpenAI Codex CLI
+【Supported tools】
+- claude: Claude Code CLI (default)
+- codex: OpenAI Codex CLI
 
-【参数说明】
-- prompt（必填）：编码任务描述，会完整传递给 CLI 工具
-- tool（可选）：CLI 工具名，可选 "claude" 或 "codex"，默认取配置中的 defaultTool
-- cwd（可选）：工作目录，默认当前会话目录
-- model（可选）：模型名称，如 sonnet、opus、haiku、gpt-4o，不传则使用工具默认模型
-- systemPrompt（可选）：追加的系统提示词
-- sessionId（可选）：恢复之前的 Claude Code 会话，传入之前任务返回的 sessionId
-- extraArgs（可选）：额外的命令行参数数组
+【Parameters】
+- prompt (required): Task description, passed directly to the CLI tool
+- tool (optional): CLI tool name, "claude" or "codex", defaults to config defaultTool
+- cwd (optional): Working directory, defaults to current session directory
+- model (optional): Model name (e.g. sonnet, opus, haiku, gpt-4o), uses tool default if not set
+- systemPrompt (optional): Additional system prompt to append
+- sessionId (optional): Resume a previous Claude Code session (pass sessionId from a prior task)
+- extraArgs (optional): Additional command-line arguments array
 
-【使用流程】
-1. 调用 code_start 提交编码任务，获得 taskId
-2. 无需等待，继续做其他事情
-3. 任务完成后会自动收到通知
-4. 如需主动查询进度，使用 code_status 传入 taskId
-5. 如需取消任务，使用 code_abort 传入 taskId`;
+【Usage flow】
+1. Call code_start to submit a task, get back a taskId
+2. No need to wait — continue doing other things
+3. Results are pushed automatically when the task completes
+4. To check progress manually, use code_status with the taskId
+5. To cancel a task, use code_abort with the taskId`;
 
 export const parameters = {
   type: "object",
   properties: {
     prompt: {
       type: "string",
-      description: "编码任务描述，传递给 CLI 工具的 prompt",
+      description: "Task description passed to the CLI tool",
     },
     tool: {
       type: "string",
       enum: ["claude", "codex"],
-      description: "CLI 工具，默认 claude",
+      description: "CLI tool name, defaults to claude",
     },
-    cwd: { type: "string", description: "工作目录，默认当前会话目录" },
+    cwd: {
+      type: "string",
+      description: "Working directory, defaults to current session directory",
+    },
     model: {
       type: "string",
-      description: "模型名称（如 sonnet、opus、gpt-4o）",
+      description: "Model name (e.g. sonnet, opus, gpt-4o)",
     },
-    systemPrompt: { type: "string", description: "追加系统提示" },
+    systemPrompt: {
+      type: "string",
+      description: "Additional system prompt to append",
+    },
     sessionId: {
       type: "string",
       description:
-        "恢复之前的 Claude Code 会话（传入之前任务返回的 sessionId）",
+        "Resume a previous Claude Code session (pass sessionId from a prior task)",
     },
     extraArgs: {
       type: "array",
       items: { type: "string" },
-      description: "额外命令行参数",
+      description: "Additional command-line arguments",
     },
   },
   required: ["prompt"],
@@ -178,7 +184,7 @@ export async function execute(input, ctx) {
     content: [
       {
         type: "text",
-        text: `Started ${adapter.name} task (${taskId}). No need to wait — results will be pushed automatically when done. Use code_status to check progress manually.`,
+        text: `Started ${adapter.name} task (${taskId}). No need to wait — results will be pushed automatically when done. `,
       },
     ],
     details: {

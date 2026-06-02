@@ -5,32 +5,32 @@
  */
 
 export const name = "code_status";
-export const description = `查询 CLI 编码任务的运行状态、已执行步骤和进度。
+export const description = `Check the status and progress of a CLI coding task.
 
-【参数】
-- taskId（必填）：任务 ID，由 code_start 返回
+【Parameters】
+- taskId (required): Task ID returned by code_start
 
-【返回信息】
-- taskId、tool（使用的工具）、status（pending/running/done/failed/aborted）
-- stepCount：已执行步骤数
-- lastSteps：最近 5 个步骤摘要
-- createdAt / completedAt：创建和完成时间
-- result：任务成功时的执行结果摘要（text、fileChanges、toolCallCount）
-- error：任务失败时的错误信息
+【Return info】
+- taskId, tool (which CLI tool), status (pending/running/done/failed/aborted)
+- stepCount: Number of steps executed
+- lastSteps: Summary of the last 5 steps
+- createdAt / completedAt: Creation and completion timestamps
+- result: Execution result summary when done (text, fileChanges, toolCallCount)
+- error: Error details when failed
 
-【状态值说明】
-- pending：已提交，等待执行
-- running：正在执行中
-- done：执行完成
-- failed：执行失败
-- aborted：已被终止`;
+【Status values】
+- pending: Submitted, waiting to execute
+- running: Currently executing
+- done: Execution completed
+- failed: Execution failed
+- aborted: Was cancelled`;
 
 export const parameters = {
   type: "object",
   properties: {
     taskId: {
       type: "string",
-      description: "任务 ID（code_start 返回的 taskId）",
+      description: "Task ID returned by code_start",
     },
   },
   required: ["taskId"],
