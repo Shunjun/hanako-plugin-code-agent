@@ -452,7 +452,11 @@
           } else if (task.status === "failed" && task.error) {
             resultEl.style.display = "block";
             resultEl.className = "result error";
-            resultEl.textContent = task.error.message || "Failed";
+            var errText = task.error.message || "Failed";
+            if (task.error.hint) {
+              errText += "\n\n" + task.error.hint;
+            }
+            resultEl.textContent = errText;
           }
 
           requestResize(expanded ? EXPANDED_H : COLLAPSED_H);
