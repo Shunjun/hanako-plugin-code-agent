@@ -1,64 +1,52 @@
 # hanako-plugin-code-agent
 
-HanaAgent plugin: delegate coding tasks to local CLI tools (Claude Code, Codex) with real-time progress display.
+HanaAgent 插件：将编码任务委托给本地 CLI 工具（Claude Code、Codex），实时展示执行进度。
 
-## Supported Tools
+## 支持的工具
 
-| Tool | Description |
-|------|-------------|
-| Claude Code | `claude` CLI — thinking, multi-tool calls, file editing |
-| Codex | OpenAI Codex CLI — JSON-RPC communication |
+| 工具 | 说明 |
+|------|------|
+| Claude Code | `claude` CLI — thinking、多工具调用、文件编辑 |
+| Codex | OpenAI Codex CLI — JSON-RPC 通信 |
 
-## Features
+## 功能
 
-- `code_start` — Start a CLI coding task (non-blocking, runs in background)
-- `code_status` — Query task status and progress
-- `code_abort` — Cancel a running task
-- Real-time progress card (collapsible, shows steps and results)
-- Automatic Agent notification on completion (via deferred result system)
-- Session resume support (pass `sessionId` to continue previous sessions)
+- `code_start` — 启动 CLI 编码任务（非阻塞，后台运行）
+- `code_status` — 查询任务状态和进度
+- `code_abort` — 终止正在运行的任务
+- 实时进度卡片（可展开，显示步骤和结果）
+- 任务完成后自动通知 Agent（通过 deferred result 系统）
+- 支持会话恢复（传入 `sessionId` 继续之前的会话）
 
-## Installation
+## 安装
 
-### Method 1: Drag & Drop (Recommended)
+1. 下载或压缩本插件目录
+2. 打开 Hanako → 设置 → 插件
+3. 将压缩包或文件夹拖入插件区域
 
-1. Download or zip this plugin directory
-2. Open Hanako → Settings → Plugins
-3. Drag the zip file or folder into the plugin area
+重启 Hanako 即可生效。
 
-### Method 2: Manual Copy
+## 前置要求
 
-```bash
-# Community plugins directory
-cp -r . ~/.hanako-dev/plugins/code-agent
-
-# Or built-in plugins directory
-cp -r . <hanako-src>/plugins/code-agent
-```
-
-Restart Hanako after installation.
-
-## Prerequisites
-
-- CLI tool installed and available in PATH (`claude` or `codex`)
+- 已安装对应 CLI 工具（`claude` 或 `codex`），且在 PATH 中可用
 - Hanako v0.82.0+
 
-## Configuration
+## 配置
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `defaultTool` | string | `claude` | Default CLI tool |
-| `defaultModel` | string | `sonnet` | Default model |
-| `maxConcurrent` | number | `3` | Max concurrent tasks |
-| `defaultTimeout` | number | `900` | Default timeout (seconds) |
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `defaultTool` | string | `claude` | 默认 CLI 工具 |
+| `defaultModel` | string | `sonnet` | 默认模型 |
+| `maxConcurrent` | number | `3` | 最大并发任务数 |
+| `defaultTimeout` | number | `900` | 默认超时（秒） |
 
-## Development
+## 开发
 
 ```bash
-# Install to dev directory
+# 安装到开发目录
 cp -r . ~/.hanako-dev/plugins/code-agent
 
-# After code changes: Settings → Plugins → disable then re-enable, or restart app
+# 修改代码后，设置 → 插件 → 禁用再启用，或重启 app
 ```
 
 ## License
