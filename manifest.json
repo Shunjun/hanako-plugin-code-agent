@@ -1,7 +1,7 @@
 {
   "id": "code-agent",
   "name": "Code Agent",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "调用本地 CLI 编码工具（Claude Code、OpenAI Codex）执行编码任务，实时展示执行细节",
   "trust": "full-access",
   "contributes": {
