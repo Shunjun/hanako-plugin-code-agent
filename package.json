@@ -1,6 +1,6 @@
 {
   "name": "hanako-plugin-code-agent",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "HanaAgent 插件：调用本地 CLI 编码工具（Claude Code、Codex）执行编码任务",
   "type": "module",
   "main": "index.js",
