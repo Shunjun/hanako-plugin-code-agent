@@ -26,8 +26,8 @@ export const description = `Start a local CLI coding tool to execute a coding ta
 
 【Usage flow】
 1. Call code_start to submit a task, get back a taskId
-2. No need to wait — continue doing other things
-3. Results are pushed automatically when the task completes
+2. Do NOT use wait/sleep/polling — results are pushed automatically when done
+3. Continue with other work immediately
 4. To check progress manually, use code_status with the taskId
 5. To cancel a task, use code_abort with the taskId`;
 
@@ -184,7 +184,7 @@ export async function execute(input, ctx) {
     content: [
       {
         type: "text",
-        text: `Started ${adapter.name} task (${taskId}). No need to wait — results will be pushed automatically when done. `,
+        text: `Task started (${taskId}). Results will be pushed automatically when done. Use code_status to check progress if needed. Do NOT use wait/sleep to poll for results.`,
       },
     ],
     details: {
@@ -192,7 +192,7 @@ export async function execute(input, ctx) {
         type: "iframe",
         route: `/card/task?taskId=${encodeURIComponent(taskId)}`,
         title: taskTitle,
-        description: `正在使用 ${adapter.name} 执行编码任务...`,
+        description: `Running ${adapter.name} task...`,
         aspectRatio: "8:1",
       },
     },

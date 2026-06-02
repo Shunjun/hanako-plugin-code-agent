@@ -174,21 +174,22 @@
       }
 
       .step {
-        padding: 4px 8px;
+        padding: 5px 8px;
         border-bottom: 1px solid var(--border, rgba(83, 125, 150, 0.12));
         display: flex;
         gap: 6px;
         align-items: flex-start;
-        font-size: 0.72rem;
         transition: background var(--duration-fast, 0.15s)
           var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
       }
       .step:last-child { border-bottom: none; }
       .step:hover { background: var(--overlay-subtle, rgba(0, 0, 0, 0.03)); }
 
-      .step-icon { flex-shrink: 0; width: 14px; text-align: center; font-size: 0.68rem; }
-      .step-text { flex: 1; word-break: break-all; color: var(--text, #3b3d3f); }
-      .step-time { font-size: 0.65rem; color: var(--text-muted, #8e9196); flex-shrink: 0; }
+      .step-icon { flex-shrink: 0; width: 14px; text-align: center; font-size: 0.68rem; padding-top: 1px; }
+      .step-body { flex: 1; min-width: 0; }
+      .step-title { font-size: 0.68rem; font-weight: 500; color: var(--text, #3b3d3f); }
+      .step-detail { font-size: 0.62rem; color: var(--text-muted, #8e9196); margin-top: 1px; word-break: break-all; }
+      .step-time { font-size: 0.58rem; color: var(--text-muted, #8e9196); flex-shrink: 0; padding-top: 1px; }
 
       .result {
         margin-top: 6px;
@@ -333,16 +334,26 @@
           return icons[type] || "\u{2022}";
         }
 
-        function stepText(s) {
+        function stepTitle(s) {
           var data = s.data || {};
-          if (s.type === "tool_call") return data.summary || data.tool || "";
-          if (s.type === "file_change")
-            return (data.action === "write" ? "Created: " : "Modified: ") + (data.path || "");
-          if (s.type === "thinking") return "Thinking...";
-          if (s.type === "text") return (data.text || "").slice(0, 120);
+          if (s.type === "tool_call") return data.tool || "tool_call";
+          if (s.type === "file_change") return data.action === "write" ? "Created file" : "Modified file";
+          if (s.type === "thinking") return "Thinking";
+          if (s.type === "text") return "Writing";
           if (s.type === "result") return "Done";
-          if (s.type === "error") return data.message || "Error";
+          if (s.type === "error") return "Error";
+          if (s.type === "session_init") return "Session started";
           return s.type || "";
+        }
+
+        function stepDetail(s) {
+          var data = s.data || {};
+          if (s.type === "tool_call") return data.summary || "";
+          if (s.type === "file_change") return data.path || "";
+          if (s.type === "thinking") return (data.text || "").slice(0, 150);
+          if (s.type === "text") return (data.text || "").slice(0, 120);
+          if (s.type === "error") return data.message || "";
+          return "";
         }
 
         function timeAgo(iso) {
@@ -362,10 +373,14 @@
           var recent = steps.slice(-20);
           stepsEl.innerHTML = recent
             .map(function (s) {
+              var detail = stepDetail(s);
               return (
                 '<div class="step">' +
                 '<span class="step-icon">' + iconForType(s.type) + "</span>" +
-                '<span class="step-text">' + escapeHtml(stepText(s)) + "</span>" +
+                '<div class="step-body">' +
+                '<div class="step-title">' + escapeHtml(stepTitle(s)) + "</div>" +
+                (detail ? '<div class="step-detail">' + escapeHtml(detail) + "</div>" : "") +
+                "</div>" +
                 '<span class="step-time">' + timeAgo(s.ts) + "</span>" +
                 "</div>"
               );
