@@ -1,0 +1,47 @@
+{
+  "id": "code-agent",
+  "name": "Code Agent",
+  "version": "0.1.0",
+  "description": "调用本地 CLI 编码工具（Claude Code、OpenAI Codex）执行编码任务，实时展示执行细节",
+  "trust": "full-access",
+  "contributes": {
+    "configuration": {
+      "properties": {
+        "cliRunnerDefaults": {
+          "type": "object",
+          "title": "CLI Runner 配置",
+          "properties": {
+            "defaultTool": {
+              "type": "string",
+              "enum": ["claude", "codex"],
+              "default": "claude",
+              "description": "默认 CLI 工具"
+            },
+            "claudePath": {
+              "type": "string",
+              "description": "Claude Code CLI 二进制路径（默认在 PATH 中查找 claude）"
+            },
+            "codexPath": {
+              "type": "string",
+              "description": "Codex CLI 二进制路径（默认在 PATH 中查找 codex）"
+            },
+            "defaultModel": {
+              "type": "string",
+              "description": "默认模型（如 sonnet、opus）"
+            },
+            "maxConcurrent": {
+              "type": "number",
+              "default": 3,
+              "description": "最大并发任务数"
+            },
+            "defaultTimeout": {
+              "type": "number",
+              "default": 900,
+              "description": "默认超时时间（秒）"
+            }
+          }
+        }
+      }
+    }
+  }
+}
