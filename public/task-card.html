@@ -227,7 +227,7 @@
         line-height: 1.5;
         color: var(--text-muted, #8e9196);
         white-space: pre-wrap;
-        word-break: break-all;
+        overflow-wrap: break-word;
       }
       .prompt-label {
         font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif);
@@ -265,10 +265,7 @@
       </div>
     </div>
     <div class="panel" id="panel">
-      <div class="prompt-box" id="promptBox" style="display:none">
-        <div class="prompt-label">Prompt</div>
-        <div id="promptText"></div>
-      </div>
+      <div class="prompt-box" id="promptBox" style="display:none"><div class="prompt-label">Prompt</div><div id="promptText"></div></div>
       <div class="steps" id="steps"></div>
       <div class="result" id="result" style="display: none"></div>
       <div class="summary" id="summary"></div>
@@ -381,7 +378,7 @@
 
         function iconForType(type) {
           var icons = {
-            thinking: "\u{1F9E0}", tool_call: "\u{1F507}", tool_result: "\u{2705}",
+            thinking: "\u{1F9E0}", tool_call: "\u{1F527}", tool_result: "\u{2705}",
             file_change: "\u{1F4DD}", text: "\u{1F4AC}", session_init: "\u{1F680}",
             error: "\u{274C}", result: "\u{1F3C1}"
           };
@@ -459,7 +456,7 @@
           if (!promptShown && task.prompt) {
             promptShown = true;
             var promptBox = document.getElementById("promptBox");
-            document.getElementById("promptText").textContent = task.prompt;
+            document.getElementById("promptText").textContent = task.prompt.trim();
             promptBox.style.display = "block";
           }
 
