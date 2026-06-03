@@ -398,6 +398,7 @@
         function renderSteps(steps) {
           if (!steps || steps.length === lastStepCount) return;
           lastStepCount = steps.length;
+          var wasAtBottom = panel.scrollHeight - panel.scrollTop - panel.clientHeight < 30;
           stepsEl.innerHTML = steps
             .map(function (s) {
               var detail = stepDetail(s);
@@ -413,7 +414,7 @@
               );
             })
             .join("");
-          panel.scrollTop = panel.scrollHeight;
+          if (wasAtBottom) panel.scrollTop = panel.scrollHeight;
         }
 
         var toolIcons = { claude: "C", codex: "X" };
