@@ -212,6 +212,29 @@
         color: var(--text-muted, #8e9196);
       }
 
+      .prompt-box {
+        margin-bottom: 6px;
+        padding: 6px 8px;
+        border-radius: var(--radius-sm, 6px);
+        background: var(--bg, #f8f5ed);
+        border: 1px solid var(--border, rgba(83, 125, 150, 0.22));
+        font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+        font-size: 0.65rem;
+        line-height: 1.5;
+        color: var(--text-muted, #8e9196);
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .prompt-label {
+        font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif);
+        font-size: 0.6rem;
+        font-weight: 500;
+        color: var(--text-muted, #8e9196);
+        margin-bottom: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
       .panel::-webkit-scrollbar { width: 4px; }
       .panel::-webkit-scrollbar-thumb {
         background: var(--border, rgba(83, 125, 150, 0.22));
@@ -238,6 +261,10 @@
       </div>
     </div>
     <div class="panel" id="panel">
+      <div class="prompt-box" id="promptBox" style="display:none">
+        <div class="prompt-label">Prompt</div>
+        <div id="promptText"></div>
+      </div>
       <div class="steps" id="steps"></div>
       <div class="result" id="result" style="display: none"></div>
       <div class="summary" id="summary"></div>
@@ -261,6 +288,7 @@
         var lastStepCount = 0;
         var expanded = false;
         var msgIndex = -1;
+        var promptShown = false;
 
         // Friendly messages per tool, selected by taskId hash
         var messages = {
@@ -370,8 +398,7 @@
         function renderSteps(steps) {
           if (!steps || steps.length === lastStepCount) return;
           lastStepCount = steps.length;
-          var recent = steps.slice(-20);
-          stepsEl.innerHTML = recent
+          stepsEl.innerHTML = steps
             .map(function (s) {
               var detail = stepDetail(s);
               return (
@@ -400,6 +427,14 @@
 
         function update(task) {
           if (!task) return;
+
+          // Show prompt on first load
+          if (!promptShown && task.prompt) {
+            promptShown = true;
+            var promptBox = document.getElementById("promptBox");
+            document.getElementById("promptText").textContent = task.prompt;
+            promptBox.style.display = "block";
+          }
 
           // Tool icon
           toolIcon.textContent = toolIcons[task.tool] || "C";

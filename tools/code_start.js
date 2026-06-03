@@ -139,7 +139,7 @@ export async function execute(input, ctx) {
     .request("deferred:register", {
       taskId,
       sessionPath,
-      meta: { type: "cli-execution", tool: toolId, prompt: input.prompt },
+      meta: { type: "cli-execution", tool: toolId, prompt: input.prompt, notifyAgentOnFailure: true },
     })
     .catch(() => {});
 
