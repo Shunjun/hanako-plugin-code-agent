@@ -113,23 +113,27 @@
         font-size: 0.6rem;
       }
 
-      .bar-chevron {
+      .bar-abort {
         flex-shrink: 0;
-        width: 16px;
-        height: 16px;
+        width: 20px;
+        height: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
+        border-radius: 4px;
+        cursor: pointer;
         color: var(--text-muted, #8e9196);
-        transition: transform var(--duration-fast, 0.15s)
-          var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+        transition: background var(--duration-fast, 0.15s)
+          var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+          color var(--duration-fast, 0.15s);
       }
-      .bar-chevron svg {
+      .bar-abort:hover {
+        background: rgba(139, 58, 58, 0.15);
+        color: var(--danger, #8b3a3a);
+      }
+      .bar-abort svg {
         width: 12px;
         height: 12px;
-      }
-      .bar-chevron[data-open="true"] {
-        transform: rotate(90deg);
       }
 
       .bar-line2 {
@@ -251,8 +255,8 @@
           <span class="bar-status-icon" id="statusIcon">⏳</span>
           <span id="statusText">waiting</span>
         </div>
-        <div class="bar-chevron" id="chevron" data-open="false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <div class="bar-abort" id="abortBtn" title="Abort task" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </div>
       </div>
       <div class="bar-line2">
@@ -280,7 +284,7 @@
         var statusIcon = document.getElementById("statusIcon");
         var statusText = document.getElementById("statusText");
         var barStepCount = document.getElementById("barStepCount");
-        var chevron = document.getElementById("chevron");
+        var abortBtn = document.getElementById("abortBtn");
         var panel = document.getElementById("panel");
         var stepsEl = document.getElementById("steps");
         var resultEl = document.getElementById("result");
@@ -346,11 +350,33 @@
           );
         }
 
-        document.getElementById("bar").addEventListener("click", function () {
+        document.getElementById("bar").addEventListener("click", function (e) {
+          if (e.target.closest(".bar-abort")) return;
           expanded = !expanded;
           panel.className = "panel" + (expanded ? " open" : "");
-          chevron.setAttribute("data-open", expanded);
           requestResize(expanded ? EXPANDED_H : COLLAPSED_H);
+        });
+
+        abortBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (abortBtn.dataset.aborting) return;
+          abortBtn.dataset.aborting = "1";
+          abortBtn.style.opacity = "0.5";
+          var url = "/api/plugins/code-agent/tasks/" + encodeURIComponent(taskId) + "/abort" +
+            (authToken ? "?token=" + encodeURIComponent(authToken) : "");
+          fetch(url, { method: "POST" })
+            .then(function (r) { return r.json(); })
+            .then(function () {
+              statusBadge.className = "bar-status-badge aborted";
+              statusIcon.textContent = "⊘";
+              statusText.textContent = "aborted";
+              barMsg.textContent = "Aborted by user";
+              abortBtn.style.display = "none";
+            })
+            .catch(function () {
+              abortBtn.dataset.aborting = "";
+              abortBtn.style.opacity = "1";
+            });
         });
 
         function iconForType(type) {
@@ -446,10 +472,19 @@
           var mi = getMsgIndex(task.tool);
           if (task.status === "done") {
             barMsg.textContent = pool[mi].replace("coding", "done coding").replace("thinking", "done thinking").replace("crafting", "done crafting");
-          } else if (task.status === "failed" || task.status === "aborted") {
+          } else if (task.status === "aborted") {
+            barMsg.textContent = "Aborted by user";
+          } else if (task.status === "failed") {
             barMsg.textContent = task.tool + " stopped";
           } else {
             barMsg.textContent = pool[mi];
+          }
+
+          // Abort button: show only for pending/running
+          if (task.status === "pending" || task.status === "running") {
+            abortBtn.style.display = "flex";
+          } else {
+            abortBtn.style.display = "none";
           }
 
           // Status badge
@@ -472,9 +507,18 @@
             statusText.textContent = statusLabels[task.status] || task.status;
           }
 
-          // Bar line 2: cwd + step count
+          // Bar line 2: cwd + elapsed time
           barCwd.textContent = task.cwd || "";
-          barStepCount.textContent = stepCount > 0 ? stepCount + " steps" : "";
+          if (task.createdAt) {
+            var endTime = task.completedAt ? new Date(task.completedAt).getTime() : Date.now();
+            var elapsed = Math.max(0, endTime - new Date(task.createdAt).getTime());
+            var secs = Math.floor(elapsed / 1000);
+            var mm = String(Math.floor(secs / 60)).padStart(2, "0");
+            var ss = String(secs % 60).padStart(2, "0");
+            barStepCount.textContent = mm + ":" + ss;
+          } else {
+            barStepCount.textContent = "";
+          }
 
           renderSteps(steps);
 

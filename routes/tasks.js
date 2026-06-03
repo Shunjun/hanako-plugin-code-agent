@@ -24,4 +24,24 @@ export default function (app, ctx) {
     const tasks = status ? s.listByStatus(status) : s.listAll();
     return c.json({ tasks });
   });
+
+  // Abort task
+  app.post("/tasks/:taskId/abort", (c) => {
+    const s = store();
+    if (!s) return c.json({ error: "not initialized" }, 503);
+    const taskId = c.req.param("taskId");
+    const task = s.get(taskId);
+    if (!task) return c.json({ error: "not found" }, 404);
+    if (task.status !== "pending" && task.status !== "running") {
+      return c.json({ error: `Task is already ${task.status}` }, 400);
+    }
+    const processes = ctx._codeAgent?.processes;
+    if (processes) {
+      const proc = processes.get(taskId);
+      if (proc) proc.abort();
+      processes.delete(taskId);
+    }
+    s.update(taskId, { status: "aborted", completedAt: new Date().toISOString() });
+    return c.json({ ok: true });
+  });
 }
