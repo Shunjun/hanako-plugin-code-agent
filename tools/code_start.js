@@ -164,7 +164,7 @@ export async function execute(input, ctx) {
       systemPrompt: input.systemPrompt,
       sessionId: input.sessionId,
       extraArgs: input.extraArgs,
-      timeout: (cfg.defaultTimeout || 900) * 1000,
+      timeout: cfg.defaultTimeout ? cfg.defaultTimeout * 1000 : undefined,
     },
     store,
     bus: ctx.bus,
