@@ -4,6 +4,9 @@
   "description": "HanaAgent 插件：调用本地 CLI 编码工具（Claude Code、Codex）执行编码任务",
   "type": "module",
   "main": "index.js",
+  "scripts": {
+    "release": "bash scripts/release.sh"
+  },
   "keywords": [
     "hanaagent",
     "plugin",
