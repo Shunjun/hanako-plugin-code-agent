@@ -244,6 +244,70 @@
         background: var(--border, rgba(83, 125, 150, 0.22));
         border-radius: 2px;
       }
+
+      /* Confirmation card */
+      .confirmation {
+        margin-bottom: 6px;
+        padding: 8px 10px;
+        border-radius: var(--radius-sm, 6px);
+        background: var(--bg, #f8f5ed);
+        border: 1px solid var(--accent, #537d96);
+      }
+      .confirmation-question {
+        font-size: 0.72rem;
+        font-weight: 500;
+        color: var(--text, #3b3d3f);
+        margin-bottom: 6px;
+      }
+      .confirmation-level {
+        font-size: 0.58rem;
+        color: var(--text-muted, #8e9196);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .confirmation-actions {
+        display: flex;
+        gap: 6px;
+      }
+      .confirmation-btn {
+        flex: 1;
+        padding: 4px 8px;
+        border: 1px solid var(--border, rgba(83, 125, 150, 0.22));
+        border-radius: var(--radius-sm, 4px);
+        font-size: 0.68rem;
+        font-weight: 500;
+        cursor: pointer;
+        background: var(--bg-card, #fcfaf5);
+        color: var(--text, #3b3d3f);
+        transition: background 0.15s, border-color 0.15s;
+      }
+      .confirmation-btn:hover {
+        background: var(--overlay-subtle, rgba(0, 0, 0, 0.05));
+      }
+      .confirmation-btn.approve {
+        border-color: var(--green, #7bae7f);
+        color: var(--green, #5a9e5f);
+      }
+      .confirmation-btn.approve:hover {
+        background: rgba(123, 174, 127, 0.1);
+      }
+      .confirmation-btn.reject {
+        border-color: var(--danger, #8b3a3a);
+        color: var(--danger, #8b3a3a);
+      }
+      .confirmation-btn.reject:hover {
+        background: rgba(139, 58, 58, 0.1);
+      }
+      .confirmation-status {
+        font-size: 0.68rem;
+        padding: 4px 8px;
+        border-radius: var(--radius-sm, 4px);
+        background: var(--overlay-subtle, rgba(0, 0, 0, 0.03));
+        color: var(--text-muted, #8e9196);
+      }
+      .confirmation-status.confirmed { color: var(--green, #5a9e5f); }
+      .confirmation-status.rejected { color: var(--danger, #8b3a3a); }
     </style>
   </head>
   <body>
@@ -266,6 +330,7 @@
     </div>
     <div class="panel" id="panel">
       <div class="prompt-box" id="promptBox" style="display:none"><div class="prompt-label">Prompt</div><div id="promptText"></div></div>
+      <div id="confirmations"></div>
       <div class="steps" id="steps"></div>
       <div class="result" id="result" style="display: none"></div>
       <div class="summary" id="summary"></div>
@@ -286,7 +351,9 @@
         var stepsEl = document.getElementById("steps");
         var resultEl = document.getElementById("result");
         var summaryEl = document.getElementById("summary");
+        var confirmationsEl = document.getElementById("confirmations");
         var lastStepCount = 0;
+        var lastConfCount = 0;
         var expanded = false;
         var msgIndex = -1;
         var promptShown = false;
@@ -440,6 +507,52 @@
           if (wasAtBottom) panel.scrollTop = panel.scrollHeight;
         }
 
+        function renderConfirmations(task) {
+          var confs = task.confirmations || [];
+          if (confs.length === lastConfCount) return;
+          lastConfCount = confs.length;
+          confirmationsEl.innerHTML = confs.map(function (conf) {
+            if (conf.status === "pending") {
+              return (
+                '<div class="confirmation" data-conf-id="' + escapeHtml(conf.confirmationId) + '">' +
+                '<div class="confirmation-level">' + escapeHtml(conf.level) + ' confirmation</div>' +
+                '<div class="confirmation-question">' + escapeHtml(conf.question) + '</div>' +
+                '<div class="confirmation-actions">' +
+                '<button class="confirmation-btn approve" onclick="respondConfirm(\'' + escapeHtml(task.taskId) + '\',\'' + escapeHtml(conf.confirmationId) + '\',true)">Approve</button>' +
+                '<button class="confirmation-btn reject" onclick="respondConfirm(\'' + escapeHtml(task.taskId) + '\',\'' + escapeHtml(conf.confirmationId) + '\',false)">Reject</button>' +
+                '</div></div>'
+              );
+            }
+            var statusClass = conf.status === "confirmed" ? "confirmed" : "rejected";
+            var statusLabel = conf.status === "confirmed" ? "Approved" : "Rejected";
+            return (
+              '<div class="confirmation">' +
+              '<div class="confirmation-question">' + escapeHtml(conf.question) + '</div>' +
+              '<div class="confirmation-status ' + statusClass + '">' + statusLabel + '</div>' +
+              '</div>'
+            );
+          }).join("");
+        }
+
+        window.respondConfirm = function (taskId, confirmationId, approved) {
+          var url = "/api/plugins/code-agent/confirm";
+          fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ taskId: taskId, confirmationId: confirmationId, approved: approved }),
+          }).then(function (r) { return r.json(); }).then(function () {
+            // Update UI immediately
+            var el = document.querySelector('[data-conf-id="' + confirmationId + '"]');
+            if (el) {
+              var statusLabel = approved ? "Approved" : "Rejected";
+              var statusClass = approved ? "confirmed" : "rejected";
+              el.innerHTML =
+                '<div class="confirmation-question">' + el.querySelector('.confirmation-question')?.textContent + '</div>' +
+                '<div class="confirmation-status ' + statusClass + '">' + statusLabel + '</div>';
+            }
+          });
+        };
+
         var toolIcons = { claude: "C", codex: "X" };
         var statusIcons = {
           pending: "⏳", running: "⚡", done: "✓", failed: "✗", aborted: "⊘"
@@ -509,6 +622,15 @@
           if (task.createdAt) {
             var endTime = task.completedAt ? new Date(task.completedAt).getTime() : Date.now();
             var elapsed = Math.max(0, endTime - new Date(task.createdAt).getTime());
+            // Subtract confirmation pause time
+            (task.confirmations || []).forEach(function (conf) {
+              if (conf.resolvedAt) {
+                elapsed -= new Date(conf.resolvedAt).getTime() - new Date(conf.createdAt).getTime();
+              } else if (conf.status === "pending") {
+                elapsed = new Date(conf.createdAt).getTime() - new Date(task.createdAt).getTime();
+              }
+            });
+            elapsed = Math.max(0, elapsed);
             var secs = Math.floor(elapsed / 1000);
             var mm = String(Math.floor(secs / 60)).padStart(2, "0");
             var ss = String(secs % 60).padStart(2, "0");
@@ -518,6 +640,7 @@
           }
 
           renderSteps(steps);
+          renderConfirmations(task);
 
           if (task.status === "done" && task.result) {
             resultEl.style.display = "block";

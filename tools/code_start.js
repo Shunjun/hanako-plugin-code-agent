@@ -128,6 +128,7 @@ export async function execute(input, ctx) {
     sessionPath,
     status: "pending",
     steps: [],
+    confirmations: [],
     result: null,
     error: null,
     createdAt: new Date().toISOString(),
